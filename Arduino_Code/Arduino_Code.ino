@@ -1,6 +1,13 @@
 #include <SoftwareSerial.h>
+#include <VarSpeedServo.h> 
 
 SoftwareSerial mySerial(4, 3); 
+
+VarSpeedServo  Rwheel;
+VarSpeedServo  Lwheel;
+
+int VSPEED = 5 , HSPEED = 10 , MSPEED = 50, MACCEL = 125;
+int MAX_VSPEED = 10 , MAX_HSPEED = 20 , MAX_MSPEED = 255, MSTOP = 1500, MSTOPdeg = 90;
 
 String command;
 bool commandEnd=false;
@@ -11,6 +18,16 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
   mySerial.begin(9600);
+
+  Rwheel.attach(6);
+  delay(100);
+  Rwheel.write(MSTOP);
+  delay(300);
+
+  Lwheel.attach(5);
+  delay(100);
+  Lwheel.write(MSTOP);
+  delay(300);
 }
 
 void loop() {
@@ -31,47 +48,62 @@ void loop() {
         }
       }else{
         commandEnd=true;
-        Serial.print(command);
-        Serial.print("=");
-        Serial.println(arg);
+        Serial.println(command);
+        execute(command, arg);
       }
   }
+    
+}
 
-  else if(command == "r-rotate"){
-      analogWrite(6, 22);
-      analogWrite(5, 22);
+void execute(String command, int arg){
+if(compareString(command, "l-rotate")){
+      Rwheel.write(MSTOPdeg-MSPEED,MACCEL);
+      Lwheel.write(MSTOPdeg-MSPEED,MACCEL);
       command="";
-    }else if(command == "l-rotate"){
-      analogWrite(6, 254);
-      analogWrite(5, 254);
+    }else if(compareString(command, "r-rotate")){
+      Rwheel.write(MSTOPdeg+MSPEED,MACCEL);
+      Lwheel.write(MSTOPdeg+MSPEED,MACCEL);
       command="";
-    }else if(command == "f-forward"){
-      analogWrite(6, 254);
-      analogWrite(5, 22);
+    }else if(compareString(command, "f-forward")){
+      Rwheel.write(MSTOPdeg-MSPEED, MACCEL);
+      Lwheel.write(MSTOPdeg+MSPEED, MACCEL);
       command="";
-    }else if(command == "f-right"){
-      analogWrite(6, 0);
-      analogWrite(5, 22);
+    }else if(compareString(command, "f-left")){
+      Rwheel.write(MSTOPdeg-MSPEED,MACCEL);
+      Lwheel.write(MSTOP);
       command="";
-    }else if(command == "f-left"){
-      analogWrite(6, 254);
-      analogWrite(5, 188);
+    }else if(compareString(command, "f-right")){
+      Rwheel.write(MSTOP);
+      Lwheel.write(MSTOPdeg+MSPEED,MACCEL);
       command="";
-    }else if(command == "b-backward"){
-      analogWrite(6, 22);
-      analogWrite(5, 254);
+    }else if(compareString(command, "b-backward")){
+      Rwheel.write(MSTOPdeg+MSPEED,MACCEL);
+      Lwheel.write(MSTOPdeg-MSPEED,MACCEL);
       command="";
-    }else if(command == "b-left"){
-      analogWrite(6, 22);
-      analogWrite(5, 0);
+    }else if(compareString(command, "b-right")){
+      Rwheel.write(MSTOPdeg+MSPEED,MACCEL);
+      Lwheel.write(MSTOP);
       command="";
-    }else if(command == "b-right"){
-      analogWrite(6, 0);
-      analogWrite(5, 254);
+    }else if(compareString(command, "b-left")){
+      Rwheel.write(MSTOP);
+      Lwheel.write(MSTOPdeg-MSPEED,MACCEL);
       command="";
-    }else if(command == "stop"){
-      analogWrite(6, 0);
-      analogWrite(5, 0);
+    }else if(compareString(command, "stop")){
+      Rwheel.write(MSTOP);
+      Lwheel.write(MSTOP);
       command="";
     }
+    command="";
+}
+
+boolean compareString(String a, String b) {
+  if (a.length() != b.length() + 1) {
+    return false;
+  }
+  for (int i = 0; i < a.length() - 1; i++) {
+    if (a[i] != b[i]) {
+      return false;
+    }
+  }
+  return true;
 }
